@@ -2,6 +2,7 @@ package com.project.code.Controller;
 
 import com.project.code.Model.Product;
 import com.project.code.Repo.InventoryRepository;
+import com.project.code.Repo.OrderItemRepository;
 import com.project.code.Repo.ProductRepository;
 import com.project.code.Service.ServiceClass;
 import java.util.HashMap;
@@ -24,6 +25,9 @@ public class ProductController {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     @Autowired
     private ServiceClass serviceClass;
@@ -52,7 +56,7 @@ public class ProductController {
     @GetMapping("/{id}")
     public Map<String, Object> getProductbyId(@PathVariable("id") Long id) {
         Map<String, Object> response = new HashMap<>();
-        Product product = productRepository.findById(id).orElse(null);
+        Product product = productRepository.findByid(id);
         response.put("products", product);
         return response;
     }
@@ -111,6 +115,7 @@ public class ProductController {
             response.put("message", "Product not present in database");
             return response;
         }
+        orderItemRepository.deleteByProductId(id);
         inventoryRepository.deleteByProductId(id);
         productRepository.deleteById(id);
         response.put("message", "Product deleted successfully");

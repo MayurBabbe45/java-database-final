@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 public interface StoreRepository extends JpaRepository<Store, Long> {
     Store findStoreById(Long id);
 
+    Store findByid(Long id);
+
     @Query("SELECT s FROM Store s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :pname, '%'))")
     List<Store> findBySubName(@Param("pname") String pname);
 }

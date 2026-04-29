@@ -34,7 +34,8 @@ public class StoreController {
 
     @GetMapping("validate/store/{id}")
     public boolean validateStore(@PathVariable("id") Long id) {
-        return storeRepository.existsById(id);
+        Store store = storeRepository.findByid(id);
+        return store != null;
     }
 
     @PostMapping("/placeOrder")

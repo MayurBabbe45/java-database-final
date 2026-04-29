@@ -66,10 +66,13 @@ public class OrderService {
             inventory.setStockLevel(inventory.getStockLevel() - purchaseProduct.getQuantity());
             inventoryRepository.save(inventory);
 
-            Product product = productRepository.findById(purchaseProduct.getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+            Product product = productRepository.findByid(purchaseProduct.getId());
+            if (product == null) {
+                throw new RuntimeException("Product not found");
+            }
 
-            OrderItem orderItem = new OrderItem(orderDetails, product, purchaseProduct.getQuantity(), purchaseProduct.getPrice());
+            OrderItem orderItem = new OrderItem(orderDetails, product, purchaseProduct.getQuantity(),
+                    purchaseProduct.getPrice() * purchaseProduct.getQuantity());
             orderItemRepository.save(orderItem);
         }
     }
