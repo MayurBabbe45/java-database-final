@@ -31,7 +31,77 @@ public class ProductController {
     @Autowired
     private InventoryRepository inventoryRepository;
 
-    // ... (Keep existing addProduct, updateProduct, filter methods)
+    @PostMapping
+    public Map<String, String> addProduct(@RequestBody Product product) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            if (!serviceClass.validateProduct(product)) {
+                response.put("message", "Product already exists");
+                return response;
+            }
+            productRepository.save(product);
+            response.put("message", "Product created successfully");
+        } catch (DataIntegrityViolationException e) {
+            response.put("message", "Data integrity error: " + e.getMessage());
+        } catch (Exception e) {
+            response.put("message", "Error creating product: " + e.getMessage());
+        }
+        return response;
+    }
+
+    @PutMapping
+    public Map<String, String> updateProduct(@RequestBody Product product) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            productRepository.save(product);
+            response.put("message", "Product updated successfully");
+        } catch (DataIntegrityViolationException e) {
+            response.put("message", "Data integrity error: " + e.getMessage());
+        } catch (Exception e) {
+            response.put("message", "Error updating product: " + e.getMessage());
+        }
+        return response;
+    }
+
+    @GetMapping("/category/{name}/{category}")
+    public Map<String, Object> filterbyCategoryProduct(@PathVariable("name") String name,
+            @PathVariable("category") String category) {
+        Map<String, Object> response = new HashMap<>();
+        List<Product> products;
+        if ("null".equalsIgnoreCase(name) && "null".equalsIgnoreCase(category)) {
+            products = productRepository.findAll();
+        } else if ("null".equalsIgnoreCase(name)) {
+            products = productRepository.findByCategory(category);
+        } else if ("null".equalsIgnoreCase(category)) {
+            products = productRepository.findProductBySubName(name);
+        } else {
+            products = productRepository.findProductBySubNameAndCategory(name, category);
+        }
+        response.put("products", products);
+        return response;
+    }
+
+    @GetMapping
+    public Map<String, Object> listProduct() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("products", productRepository.findAll());
+        return response;
+    }
+
+    @GetMapping("filter/{category}/{storeid}")
+    public Map<String, Object> getProductbyCategoryAndStoreId(@PathVariable("category") String category,
+            @PathVariable("storeid") Long storeid) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("product", productRepository.findProductByCategory(category, storeid));
+        return response;
+    }
+
+    @GetMapping("/searchProduct/{name}")
+    public Map<String, Object> searchProduct(@PathVariable("name") String name) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("products", productRepository.findProductBySubName(name));
+        return response;
+    }
 
     // EXACT RUBRIC REQUIREMENT: Error handling returning 404 NOT FOUND
     @GetMapping("/{id}")
