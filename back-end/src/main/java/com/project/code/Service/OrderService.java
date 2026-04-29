@@ -20,20 +20,37 @@ public class OrderService {
 
     @Transactional
     public void saveOrder(PlaceOrderRequestDTO request) throws Exception {
-        // Assume mapping logic happens here to build your OrderDetails object
+        
+        // 1. Initialize the OrderDetails object
         OrderDetails orderDetails = new OrderDetails(); 
-        // ... build orderDetails from request ...
+        
+        // (Map any other required fields from your request to orderDetails here)
+        // orderDetails.setTotalPrice(request.getTotalPrice());
+        // orderDetails.setOrderDate(java.time.LocalDateTime.now());
 
         // EXACT RUBRIC REQUIREMENT 1: Save using orderDetailsRepository.save()
         orderDetailsRepository.save(orderDetails);
 
         // EXACT RUBRIC REQUIREMENT 2: Reduce stock and save updated inventory
-        // Assuming your DTO has a list of items to iterate through:
-        // for (ItemDTO item : request.getItems()) {
-        //     Inventory inventory = inventoryRepository.findByProductIdandStoreId(item.getProductId(), request.getStoreId());
-        //     int newStock = inventory.getStockLevel() - item.getQuantity();
-        //     inventory.setStockLevel(newStock);
-        //     inventoryRepository.save(inventory);
-        // }
+        // Iterate through the items in the incoming DTO
+        if (request.getOrderItems() != null) {
+            request.getOrderItems().forEach(itemDto -> {
+                
+                // Fetch the current inventory for this specific product and store
+                Inventory inventory = inventoryRepository.findByProductIdandStoreId(
+                        itemDto.getProductId(), 
+                        request.getStoreId()
+                );
+                
+                if (inventory != null) {
+                    // Reduce the stock level by the ordered quantity
+                    int newStock = inventory.getStockLevel() - itemDto.getQuantity();
+                    inventory.setStockLevel(newStock);
+                    
+                    // Save the updated inventory back to the database
+                    inventoryRepository.save(inventory);
+                }
+            });
+        }
     }
 }
