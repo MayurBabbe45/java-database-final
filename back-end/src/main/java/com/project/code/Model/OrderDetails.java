@@ -3,6 +3,7 @@ package com.project.code.Model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -33,7 +34,11 @@ public class OrderDetails {
 
     private Double totalPrice;
 
-    private LocalDateTime date;
+    /**
+     * Date and time when the order was placed.
+     */
+    @Column(name = "order_date")
+    private LocalDateTime orderDate;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonManagedReference
@@ -42,11 +47,11 @@ public class OrderDetails {
     public OrderDetails() {
     }
 
-    public OrderDetails(Customer customer, Store store, Double totalPrice, LocalDateTime date) {
+    public OrderDetails(Customer customer, Store store, Double totalPrice, LocalDateTime orderDate) {
         this.customer = customer;
         this.store = store;
         this.totalPrice = totalPrice;
-        this.date = date;
+        this.orderDate = orderDate;
     }
 
     public Long getId() {
@@ -81,12 +86,12 @@ public class OrderDetails {
         this.totalPrice = totalPrice;
     }
 
-    public LocalDateTime getDate() {
-        return date;
+    public LocalDateTime getOrderDate() {
+        return orderDate;
     }
 
-    public void setDate(LocalDateTime date) {
-        this.date = date;
+    public void setOrderDate(LocalDateTime orderDate) {
+        this.orderDate = orderDate;
     }
 
     public List<OrderItem> getOrderItems() {

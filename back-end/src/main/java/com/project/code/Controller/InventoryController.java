@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -93,22 +95,26 @@ public class InventoryController {
         return response;
     }
 
-    @GetMapping("filter/{category}/{name}/{storeid}")
-    public Map<String, Object> getProductName(@PathVariable("category") String category,
-            @PathVariable("name") String name, @PathVariable("storeid") Long storeid) {
+    @GetMapping("filter/{category}/{name}/{storeId}")
+    public ResponseEntity<Map<String, Object>> getProductName(@PathVariable("category") String category,
+            @PathVariable("name") String name, @PathVariable("storeId") Long storeId) {
         Map<String, Object> response = new HashMap<>();
+        if (storeId == null || storeId <= 0) {
+            response.put("message", "Invalid storeId");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
         List<Product> products;
         if ("null".equalsIgnoreCase(category) && "null".equalsIgnoreCase(name)) {
-            products = productRepository.findProductsByStoreId(storeid);
+            products = productRepository.findProductsByStoreId(storeId);
         } else if ("null".equalsIgnoreCase(category)) {
-            products = productRepository.findByNameLike(storeid, name);
+            products = productRepository.findByNameLike(storeId, name);
         } else if ("null".equalsIgnoreCase(name)) {
-            products = productRepository.findByCategoryAndStoreId(storeid, category);
+            products = productRepository.findByCategoryAndStoreId(storeId, category);
         } else {
-            products = productRepository.findByNameAndCategory(storeid, name, category);
+            products = productRepository.findByNameAndCategory(storeId, name, category);
         }
-        response.put("product", products);
-        return response;
+        response.put("products", products);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("search/{name}/{storeId}")
@@ -134,9 +140,25 @@ public class InventoryController {
     }
 
     @GetMapping("validate/{quantity}/{storeId}/{productId}")
-    public boolean validateQuantity(@PathVariable("quantity") Integer quantity,
+    public ResponseEntity<Map<String, Object>> validateQuantity(@PathVariable("quantity") Integer quantity,
             @PathVariable("storeId") Long storeId, @PathVariable("productId") Long productId) {
+        Map<String, Object> response = new HashMap<>();
+        if (quantity == null || quantity <= 0) {
+            response.put("message", "Quantity must be greater than zero");
+            response.put("isValid", false);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
         Inventory inventory = inventoryRepository.findByProductIdandStoreId(productId, storeId);
-        return inventory != null && inventory.getStockLevel() != null && inventory.getStockLevel() >= quantity;
+        if (inventory == null) {
+            response.put("message", "Inventory not found for given product and store");
+            response.put("isValid", false);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        boolean isValid = inventory.getStockLevel() != null && inventory.getStockLevel() >= quantity;
+        response.put("isValid", isValid);
+        response.put("availableStock", inventory.getStockLevel());
+        response.put("productId", productId);
+        response.put("storeId", storeId);
+        return ResponseEntity.ok(response);
     }
 }

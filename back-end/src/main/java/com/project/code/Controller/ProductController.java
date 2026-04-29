@@ -5,11 +5,14 @@ import com.project.code.Repo.InventoryRepository;
 import com.project.code.Repo.OrderItemRepository;
 import com.project.code.Repo.ProductRepository;
 import com.project.code.Service.ServiceClass;
+import jakarta.transaction.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,11 +57,15 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> getProductbyId(@PathVariable("id") Long id) {
+    public ResponseEntity<Map<String, Object>> getProductbyId(@PathVariable("id") Long id) {
         Map<String, Object> response = new HashMap<>();
         Product product = productRepository.findByid(id);
-        response.put("products", product);
-        return response;
+        if (product == null) {
+            response.put("message", "Product not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        response.put("product", product);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping
@@ -109,17 +116,23 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    public Map<String, String> deleteProduct(@PathVariable("id") Long id) {
+    @Transactional
+    public ResponseEntity<Map<String, String>> deleteProduct(@PathVariable("id") Long id) {
         Map<String, String> response = new HashMap<>();
         if (!serviceClass.ValidateProductId(id)) {
             response.put("message", "Product not present in database");
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-        orderItemRepository.deleteByProductId(id);
-        inventoryRepository.deleteByProductId(id);
-        productRepository.deleteById(id);
-        response.put("message", "Product deleted successfully");
-        return response;
+        try {
+            orderItemRepository.deleteByProductId(id);
+            inventoryRepository.deleteByProductId(id);
+            productRepository.deleteById(id);
+            response.put("message", "Product deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("message", "Error deleting product: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @GetMapping("/searchProduct/{name}")
