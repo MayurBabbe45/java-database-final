@@ -49,7 +49,7 @@ public class ProductController {
         return response;
     }
 
-    @GetMapping("/product/{id}")
+    @GetMapping("/{id}")
     public Map<String, Object> getProductbyId(@PathVariable("id") Long id) {
         Map<String, Object> response = new HashMap<>();
         Product product = productRepository.findById(id).orElse(null);
